@@ -1,0 +1,29 @@
+version: 2
+
+models:
+  - name: fct_funnel
+    columns:
+      - name: user_id
+        tests: [not_null]
+      - name: stage
+        tests:
+          - accepted_values:
+              values: [signup, onboarding_started, onboarding_completed, first_project_created, teammate_invited]
+
+  - name: fct_cohort_retention
+    columns:
+      - name: cohort_week
+        tests: [not_null]
+      - name: period_number
+        tests: [not_null]
+      - name: retained_users
+        tests: [not_null]
+
+  - name: fct_ab_tests
+    columns:
+      - name: user_id
+        tests: [not_null]
+      - name: variant
+        tests:
+          - accepted_values:
+              values: [control, treatment]

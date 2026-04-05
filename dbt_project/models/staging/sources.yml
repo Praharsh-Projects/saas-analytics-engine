@@ -1,0 +1,9 @@
+version: 2
+
+sources:
+  - name: app_raw
+    schema: public
+    tables:
+      - name: raw_events
+      - name: dim_users
+      - name: ab_test_assignments

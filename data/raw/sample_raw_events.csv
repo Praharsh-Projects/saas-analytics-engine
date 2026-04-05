@@ -1,0 +1,7 @@
+event_id,user_id,event_name,event_ts,session_id,experiment_id,variant,revenue,properties
+e1,u1,signup,2026-01-01T00:00:00+00:00,s1,onboarding_copy_test,control,0,"{}"
+e2,u1,onboarding_started,2026-01-01T00:03:00+00:00,s1,onboarding_copy_test,control,0,"{}"
+e3,u1,session_started,2026-01-07T00:00:00+00:00,s2,onboarding_copy_test,control,0,"{}"
+e4,u2,signup,2026-01-02T00:00:00+00:00,s3,onboarding_copy_test,treatment,0,"{}"
+e5,u2,onboarding_started,2026-01-02T00:04:00+00:00,s3,onboarding_copy_test,treatment,0,"{}"
+e6,u2,onboarding_completed,2026-01-02T00:12:00+00:00,s3,onboarding_copy_test,treatment,0,"{}"

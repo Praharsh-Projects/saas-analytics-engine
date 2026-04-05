@@ -1,0 +1,47 @@
+version: 2
+
+models:
+  - name: stg_raw_events
+    columns:
+      - name: event_id
+        tests: [not_null, unique]
+      - name: event_name
+        tests:
+          - not_null
+          - accepted_values:
+              values:
+                [
+                  signup,
+                  onboarding_started,
+                  onboarding_completed,
+                  first_project_created,
+                  teammate_invited,
+                  session_started,
+                  feature_analytics_viewed,
+                  feature_collab_used,
+                  feature_export_used,
+                  subscription_payment,
+                  churned
+                ]
+
+  - name: stg_dim_users
+    columns:
+      - name: user_id
+        tests: [not_null, unique]
+      - name: plan
+        tests:
+          - accepted_values:
+              values: [free, pro, team, enterprise]
+      - name: channel
+        tests:
+          - accepted_values:
+              values: [organic, paid_search, linkedin_ads, referral, direct]
+
+  - name: stg_ab_test_assignments
+    columns:
+      - name: user_id
+        tests: [not_null]
+      - name: variant
+        tests:
+          - accepted_values:
+              values: [control, treatment]

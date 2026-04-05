@@ -1,0 +1,26 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: saas_analytics_postgres
+    environment:
+      POSTGRES_DB: analytics
+      POSTGRES_USER: analytics
+      POSTGRES_PASSWORD: analytics
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  dashboard:
+    build: .
+    container_name: saas_analytics_dash
+    environment:
+      DATABASE_URL: postgresql+psycopg2://analytics:analytics@postgres:5432/analytics
+    depends_on:
+      - postgres
+    ports:
+      - "8050:8050"
+    command: ["python", "dashboards/app.py"]
+
+volumes:
+  postgres_data:

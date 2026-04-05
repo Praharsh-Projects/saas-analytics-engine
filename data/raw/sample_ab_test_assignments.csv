@@ -1,0 +1,3 @@
+experiment_id,user_id,variant,assigned_ts
+onboarding_copy_test,u1,control,2026-01-01T00:00:00+00:00
+onboarding_copy_test,u2,treatment,2026-01-02T00:00:00+00:00
