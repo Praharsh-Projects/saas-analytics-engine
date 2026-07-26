@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   run-daily-pipeline:
@@ -26,14 +26,17 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run simulation + report
+      - name: Run unit and pipeline checks
         run: |
+          python -m pytest -q
           python scripts/run_daily_pipeline.py
 
-      - name: Commit updated daily report
-        run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add reports/daily_metrics.md reports/funnel.png reports/cohort_heatmap.png || true
-          git diff --staged --quiet || git commit -m "chore: update daily metrics report"
-          git push
+      - name: Upload generated report
+        uses: actions/upload-artifact@v4
+        with:
+          name: daily-product-metrics
+          path: |
+            reports/daily_metrics.md
+            reports/funnel.png
+            reports/cohort_heatmap.png
+          retention-days: 7

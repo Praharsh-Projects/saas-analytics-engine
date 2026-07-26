@@ -1,0 +1,28 @@
+version: 2
+
+exposures:
+  - name: product_metrics_dashboard
+    label: Product Metrics Dashboard
+    type: dashboard
+    maturity: medium
+    url: http://localhost:8050
+    description: Local dashboard consuming governed activation and retention marts.
+    depends_on:
+      - ref('fct_funnel')
+      - ref('fct_cohort_retention')
+      - ref('fct_feature_engagement')
+    owner:
+      name: Product Analytics
+      email: praharshpulla@gmail.com
+
+  - name: daily_metrics_report
+    label: Daily Metrics Report
+    type: application
+    maturity: medium
+    description: Scheduled report consuming activation and experiment outcomes.
+    depends_on:
+      - ref('fct_funnel')
+      - ref('fct_ab_tests')
+    owner:
+      name: Product Analytics
+      email: praharshpulla@gmail.com

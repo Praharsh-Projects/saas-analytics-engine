@@ -4,6 +4,10 @@ __pycache__/
 .venv/
 .env
 .DS_Store
+dbt_project/.user.yml
+dbt_project/dbt_packages/
+dbt_project/logs/
+dbt_project/target/
 data/raw/*.csv
 !data/raw/.gitkeep
 !data/raw/sample_*.csv

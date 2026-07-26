@@ -2,46 +2,71 @@ version: 2
 
 models:
   - name: stg_raw_events
+    description: Validated product events at one row per event identifier.
+    meta:
+      owner: product-analytics
     columns:
       - name: event_id
         tests: [not_null, unique]
+      - name: user_id
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_dim_users')
+                field: user_id
       - name: event_name
         tests:
           - not_null
           - accepted_values:
-              values:
-                [
-                  signup,
-                  onboarding_started,
-                  onboarding_completed,
-                  first_project_created,
-                  teammate_invited,
-                  session_started,
-                  feature_analytics_viewed,
-                  feature_collab_used,
-                  feature_export_used,
-                  subscription_payment,
-                  churned
-                ]
+              arguments:
+                values:
+                  [
+                    signup,
+                    onboarding_started,
+                    onboarding_completed,
+                    first_project_created,
+                    teammate_invited,
+                    session_started,
+                    feature_analytics_viewed,
+                    feature_collab_used,
+                    feature_export_used,
+                    subscription_payment,
+                    churned
+                  ]
 
   - name: stg_dim_users
+    description: Product user attributes at one row per synthetic user.
+    meta:
+      owner: product-analytics
     columns:
       - name: user_id
         tests: [not_null, unique]
       - name: plan
         tests:
           - accepted_values:
-              values: [free, pro, team, enterprise]
+              arguments:
+                values: [free, pro, team, enterprise]
       - name: channel
         tests:
           - accepted_values:
-              values: [organic, paid_search, linkedin_ads, referral, direct]
+              arguments:
+                values: [organic, paid_search, linkedin_ads, referral, direct]
 
   - name: stg_ab_test_assignments
+    description: Experiment assignments at one row per experiment and user.
+    meta:
+      owner: product-analytics
     columns:
       - name: user_id
-        tests: [not_null]
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_dim_users')
+                field: user_id
       - name: variant
         tests:
           - accepted_values:
-              values: [control, treatment]
+              arguments:
+                values: [control, treatment]

@@ -25,6 +25,10 @@ class SimulationConfig:
     start_days_ago: int = 120
 
 
+def _deterministic_uuid() -> str:
+    return str(uuid.UUID(int=random.getrandbits(128), version=4))
+
+
 def _weighted_choice(values: list[str], weights: list[float]) -> str:
     return random.choices(values, weights=weights, k=1)[0]
 
@@ -41,7 +45,7 @@ def _event_row(
     properties: dict,
 ) -> dict:
     return {
-        "event_id": str(uuid.uuid4()),
+        "event_id": _deterministic_uuid(),
         "user_id": user_id,
         "event_name": event_name,
         "event_ts": event_ts.isoformat(),
@@ -53,19 +57,32 @@ def _event_row(
     }
 
 
-def generate_saas_dataset(n_users: int = 8000, seed: int = 42, output_dir: str | Path | None = None) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+def generate_saas_dataset(
+    n_users: int = 8000,
+    seed: int = 42,
+    output_dir: str | Path | None = None,
+    as_of: datetime | None = None,
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    if n_users <= 0:
+        raise ValueError("n_users must be positive")
+
     random.seed(seed)
     np.random.seed(seed)
 
     cfg = SimulationConfig(n_users=n_users, seed=seed)
-    base_date = datetime.now(UTC) - timedelta(days=cfg.start_days_ago)
+    reference_time = as_of or datetime.now(UTC)
+    if reference_time.tzinfo is None:
+        reference_time = reference_time.replace(tzinfo=UTC)
+    else:
+        reference_time = reference_time.astimezone(UTC)
+    base_date = reference_time - timedelta(days=cfg.start_days_ago)
 
     users: list[dict] = []
     events: list[dict] = []
     assignments: list[dict] = []
 
     for _ in range(cfg.n_users):
-        user_id = str(uuid.uuid4())
+        user_id = _deterministic_uuid()
         signup_ts = base_date + timedelta(days=random.randint(0, cfg.start_days_ago), hours=random.randint(0, 23))
 
         plan = _weighted_choice(PLANS, [0.55, 0.26, 0.14, 0.05])
@@ -92,7 +109,7 @@ def generate_saas_dataset(n_users: int = 8000, seed: int = 42, output_dir: str |
             }
         )
 
-        session_id = str(uuid.uuid4())
+        session_id = _deterministic_uuid()
         events.append(
             _event_row(
                 user_id=user_id,
@@ -114,7 +131,7 @@ def generate_saas_dataset(n_users: int = 8000, seed: int = 42, output_dir: str |
         current_ts = signup_ts + timedelta(minutes=random.randint(5, 120))
 
         if random.random() < p_onboarding_start:
-            session_id = str(uuid.uuid4())
+            session_id = _deterministic_uuid()
             events.append(
                 _event_row(
                     user_id=user_id,
@@ -179,7 +196,7 @@ def generate_saas_dataset(n_users: int = 8000, seed: int = 42, output_dir: str |
 
         for _session in range(session_count):
             session_day = signup_ts + timedelta(days=random.randint(0, retained_days))
-            session_id = str(uuid.uuid4())
+            session_id = _deterministic_uuid()
             last_active = max(last_active, session_day)
 
             events.append(
@@ -231,14 +248,14 @@ def generate_saas_dataset(n_users: int = 8000, seed: int = 42, output_dir: str |
                     )
                 )
 
-        if (datetime.now(UTC) - last_active).days > random.randint(14, 45):
+        if (reference_time - last_active).days > random.randint(14, 45):
             churn_ts = last_active + timedelta(days=random.randint(7, 35))
             events.append(
                 _event_row(
                     user_id=user_id,
                     event_name="churned",
                     event_ts=churn_ts,
-                    session_id=str(uuid.uuid4()),
+                    session_id=_deterministic_uuid(),
                     experiment_id=EXPERIMENT_ID,
                     variant=variant,
                     revenue=0.0,
@@ -268,12 +285,26 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--users", type=int, default=8000, help="Number of synthetic users")
     parser.add_argument("--seed", type=int, default=42, help="Random seed")
     parser.add_argument("--output-dir", type=str, default=None, help="Output directory for CSV files")
+    parser.add_argument(
+        "--as-of",
+        type=str,
+        default=None,
+        help="UTC reference timestamp, for example 2026-07-26T00:00:00Z",
+    )
     return parser.parse_args()
 
 
 def main() -> None:
     args = parse_args()
-    generate_saas_dataset(n_users=args.users, seed=args.seed, output_dir=args.output_dir)
+    as_of = None
+    if args.as_of:
+        as_of = datetime.fromisoformat(args.as_of.replace("Z", "+00:00"))
+    generate_saas_dataset(
+        n_users=args.users,
+        seed=args.seed,
+        output_dir=args.output_dir,
+        as_of=as_of,
+    )
 
 
 if __name__ == "__main__":

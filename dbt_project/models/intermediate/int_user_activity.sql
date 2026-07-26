@@ -19,5 +19,11 @@ select
     last_event_ts,
     revenue_total,
     churned_flag,
-    date_part('day', now() - last_event_ts) as days_since_active
+    date_part(
+        'day',
+        cast(
+            '{{ var("as_of_timestamp", "2026-07-26 00:00:00+00") }}'
+            as timestamptz
+        ) - last_event_ts
+    ) as days_since_active
 from base

@@ -2,15 +2,22 @@ version: 2
 
 models:
   - name: fct_funnel
+    description: User-level activation status at one row per user and funnel stage.
+    meta:
+      owner: product-analytics
     columns:
       - name: user_id
         tests: [not_null]
       - name: stage
         tests:
           - accepted_values:
-              values: [signup, onboarding_started, onboarding_completed, first_project_created, teammate_invited]
+              arguments:
+                values: [signup, onboarding_started, onboarding_completed, first_project_created, teammate_invited]
 
   - name: fct_cohort_retention
+    description: Weekly retained-user counts by signup cohort and activity period.
+    meta:
+      owner: product-analytics
     columns:
       - name: cohort_week
         tests: [not_null]
@@ -20,10 +27,30 @@ models:
         tests: [not_null]
 
   - name: fct_ab_tests
+    description: Experiment conversion and revenue outcomes at assignment grain.
+    meta:
+      owner: product-analytics
     columns:
+      - name: experiment_id
+        tests: [not_null]
       - name: user_id
         tests: [not_null]
       - name: variant
         tests:
           - accepted_values:
-              values: [control, treatment]
+              arguments:
+                values: [control, treatment]
+
+  - name: fct_feature_engagement
+    description: Weekly feature usage counts by user and feature event.
+    meta:
+      owner: product-analytics
+    columns:
+      - name: user_id
+        tests: [not_null]
+      - name: week_start
+        tests: [not_null]
+      - name: feature_event
+        tests: [not_null]
+      - name: usage_count
+        tests: [not_null]
