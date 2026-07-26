@@ -16,7 +16,7 @@ activity as (
 cohort_activity as (
     select
         s.cohort_week,
-        date_part('week', age(a.active_week, s.cohort_week))::int as period_number,
+        ((a.active_week - s.cohort_week) / 7)::int as period_number,
         s.user_id
     from signups s
     join activity a on s.user_id = a.user_id

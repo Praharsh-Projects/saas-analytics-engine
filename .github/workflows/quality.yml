@@ -1,0 +1,77 @@
+name: Data Product Quality Gates
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  python:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Test Python pipeline
+        run: |
+          python -m pytest -q
+          python -m compileall analytics dashboards scripts simulate
+          python scripts/run_daily_pipeline.py
+
+  warehouse:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: analytics
+          POSTGRES_USER: analytics
+          POSTGRES_PASSWORD: analytics
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U analytics -d analytics"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      DATABASE_URL: postgresql+psycopg2://analytics:analytics@localhost:5432/analytics
+      DBT_HOST: localhost
+      DBT_PORT: "5432"
+      DBT_USER: analytics
+      DBT_PASSWORD: analytics
+      DBT_DBNAME: analytics
+      DBT_SCHEMA: public
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Generate and load deterministic source snapshot
+        run: |
+          python simulate/generate_events.py \
+            --users 1200 \
+            --seed 42 \
+            --as-of 2026-07-26T00:00:00Z
+          python scripts/init_db.py
+          python scripts/load_to_postgres.py
+          python scripts/load_to_postgres.py
+      - name: Build and test dbt data product
+        run: >-
+          dbt build
+          --project-dir dbt_project
+          --profiles-dir dbt_project
+          --vars '{"as_of_timestamp": "2026-07-26 00:00:00+00"}'
+          --no-partial-parse
+          --warn-error
+      - name: Verify warehouse contracts
+        run: python scripts/verify_warehouse.py
